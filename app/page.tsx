@@ -5,53 +5,70 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Globe, FileText } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, Globe, FileText, AlertCircle } from "lucide-react";
 
 export default function Home() {
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<{ summary: string; urduTranslation: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<{
+    title: string;
+    summary: string;
+    urduTranslation: string;
+    author?: string;
+    source?: string;
+    published?: string;
+  } | null>(null);
+
+  const validateUrl = (url: string): boolean => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) return;
 
+    if (!validateUrl(url)) {
+      setError("Please enter a valid URL");
+      return;
+    }
+
     setIsLoading(true);
     setResult(null);
+    setError(null);
 
     try {
-      // Call our scraping API
-      const response = await fetch('/api/scrape', {
-        method: 'POST',
+      const response = await fetch("/api/scrape", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ url }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(data.error || `HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      
-      // For now, we'll create a simple summary from the scraped content
-      // In the next step, we'll add AI summarization
-      const content = data.content || '';
-      const summary = content.length > 200 
-        ? content.substring(0, 200) + '...' 
-        : content;
-      
-      // Simple Urdu translation (we'll improve this later)
-      const urduTranslation = "یہ مواد کا خلاصہ ہے۔ اگلے مرحلے میں، ہم بہتر ترجمہ شامل کریں گے۔";
-      
       setResult({
-        summary: `Title: ${data.title || 'No title'}\n\nSummary: ${summary}`,
-        urduTranslation
+        title: data.title || "No title",
+        summary: data.summary || "No summary available",
+        urduTranslation: data.urduTranslation || "No translation available",
+        author: data.author,
+        source: data.source,
+        published: data.published,
       });
     } catch (error) {
       console.error("Error processing URL:", error);
-      alert("Failed to scrape the URL. Please check the URL and try again.");
+      setError(error instanceof Error ? error.message : "An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -95,11 +112,7 @@ export default function Home() {
                   className="w-full"
                 />
               </div>
-              <Button 
-                type="submit" 
-                disabled={isLoading || !url.trim()}
-                className="w-full"
-              >
+              <Button type="submit" disabled={isLoading || !url.trim()} className="w-full">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -116,6 +129,16 @@ export default function Home() {
           </CardContent>
         </Card>
 
+        {/* Error Alert */}
+        {error && (
+          <Alert className="mb-6 border-red-200 bg-red-50">
+            <AlertCircle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-700">
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Results Section */}
         {result && (
           <div className="space-y-6">
@@ -131,9 +154,34 @@ export default function Home() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-700 leading-relaxed">
-                  {result.summary}
-                </p>
+                <div className="space-y-3">
+                  <div>
+                    <strong className="text-slate-900">Title:</strong>
+                    <p className="text-slate-700 mt-1">{result.title}</p>
+                  </div>
+                  <div>
+                    <strong className="text-slate-900">Summary:</strong>
+                    <p className="text-slate-700 mt-1 leading-relaxed">{result.summary}</p>
+                  </div>
+                  {result.author && (
+                    <div>
+                      <strong className="text-slate-900">Author:</strong>
+                      <p className="text-slate-700 mt-1">{result.author}</p>
+                    </div>
+                  )}
+                  {result.source && (
+                    <div>
+                      <strong className="text-slate-900">Source:</strong>
+                      <p className="text-slate-700 mt-1">{result.source}</p>
+                    </div>
+                  )}
+                  {result.published && (
+                    <div>
+                      <strong className="text-slate-900">Published:</strong>
+                      <p className="text-slate-700 mt-1">{result.published}</p>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
@@ -159,4 +207,4 @@ export default function Home() {
       </div>
     </div>
   );
-} 
+}
