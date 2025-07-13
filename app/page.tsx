@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Globe, FileText, AlertCircle, Sparkles, Languages, Clock, User, Calendar, Zap, Brain, BookOpen } from "lucide-react";
+import { Loader2, Globe, AlertCircle, Languages, User, Calendar, Zap, Brain, BookOpen, Clock } from "lucide-react";
 
 export default function Home() {
   const [url, setUrl] = useState("");
@@ -19,7 +18,48 @@ export default function Home() {
     author?: string;
     source?: string;
     published?: string;
+    wordCount?: number; // Added wordCount to state
   } | null>(null);
+  const [displayedSummary, setDisplayedSummary] = useState("");
+  const [displayedUrduTranslation, setDisplayedUrduTranslation] = useState("");
+  const [typingComplete, setTypingComplete] = useState(false);
+
+  // Typing animation effect
+  useEffect(() => {
+    if (result && !typingComplete) {
+      let summaryIndex = 0;
+      let urduIndex = 0;
+      const summaryText = result.summary;
+      const urduText = result.urduTranslation;
+      setDisplayedSummary("");
+      setDisplayedUrduTranslation("");
+
+      const typingSpeed = 50; // Milliseconds per character
+      const typingInterval = setInterval(() => {
+        if (summaryIndex < summaryText.length) {
+          setDisplayedSummary((prev) => prev + summaryText[summaryIndex]);
+          summaryIndex++;
+        }
+        if (urduIndex < urduText.length) {
+          setDisplayedUrduTranslation((prev) => prev + urduText[urduIndex]);
+          urduIndex++;
+        }
+        if (summaryIndex >= summaryText.length && urduIndex >= urduText.length) {
+          clearInterval(typingInterval);
+          setTypingComplete(true);
+        }
+      }, typingSpeed);
+
+      return () => clearInterval(typingInterval);
+    }
+  }, [result, typingComplete]);
+
+  // Calculate reading time
+  const calculateReadingTime = (wordCount: number): string => {
+    const wordsPerMinute = 200; // Standard reading speed
+    const minutes = Math.ceil(wordCount / wordsPerMinute);
+    return minutes === 1 ? `${minutes} minute` : `${minutes} minutes`;
+  };
 
   const validateUrl = (url: string): boolean => {
     try {
@@ -41,6 +81,9 @@ export default function Home() {
 
     setIsLoading(true);
     setResult(null);
+    setDisplayedSummary("");
+    setDisplayedUrduTranslation("");
+    setTypingComplete(false);
     setError(null);
 
     try {
@@ -65,6 +108,7 @@ export default function Home() {
         author: data.author,
         source: data.source,
         published: data.published,
+        wordCount: data.wordCount, // Include wordCount
       });
     } catch (error) {
       console.error("Error processing URL:", error);
@@ -389,7 +433,7 @@ export default function Home() {
                     fontSize: '1rem',
                     lineHeight: '1.7',
                     margin: 0
-                  }}>{result.summary}</p>
+                  }}>{displayedSummary}</p>
                 </div>
                 
                 {/* Metadata */}
@@ -439,6 +483,22 @@ export default function Home() {
                       <Calendar style={{ width: '1rem', height: '1rem', color: 'rgba(255, 255, 255, 0.6)' }} />
                       <span style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.9)' }}>
                         {result.published}
+                      </span>
+                    </div>
+                  )}
+                  {result.wordCount && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      padding: '0.75rem',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: '0.5rem',
+                      border: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                      <Clock style={{ width: '1rem', height: '1rem', color: 'rgba(255, 255, 255, 0.6)' }} />
+                      <span style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.9)' }}>
+                        Reading Time: {calculateReadingTime(result.wordCount)}
                       </span>
                     </div>
                   )}
@@ -507,7 +567,7 @@ export default function Home() {
                     direction: 'rtl',
                     margin: 0
                   }}>
-                    {result.urduTranslation}
+                    {displayedUrduTranslation}
                   </p>
                 </div>
               </div>

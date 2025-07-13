@@ -61,7 +61,7 @@ const urduDictionary: { [key: string]: string } = {
   comes: "آتا ہے",
   came: "آیا",
   see: "دیکھنا",
-  sees: "دیکھتا ہے",
+   
   saw: "دیکھا",
   know: "جاننا",
   knows: "جانتا ہے",
@@ -454,7 +454,6 @@ const urduDictionary: { [key: string]: string } = {
   kitchen: "باورچی خانہ",
   land: "زمین",
   language: "زبان",
-   
   later: "بعد میں",
   laugh: "ہنسنا",
   law: "قانون",
@@ -688,7 +687,7 @@ const urduDictionary: { [key: string]: string } = {
   rule: "قاعدہ",
   run: "بھاگنا",
   safe: "محفوظ",
-   
+  
   save: "بچانا",
   say: "کہنا",
   school: "سکول",
@@ -734,7 +733,7 @@ const urduDictionary: { [key: string]: string } = {
   skill: "ہنر",
   sleep: "سونے",
   slow: "آہستہ",
-  Small: " چھوٹا",
+  
   smile: "مسکراہٹ",
   so: "تو",
   social: "سماجی",
@@ -799,7 +798,7 @@ const urduDictionary: { [key: string]: string } = {
   test: "ٹیسٹ",
   than: "سے",
   thank: "شکریہ",
-   
+  
   their: "ان کا",
   them: "انہیں",
   then: "پھر",
@@ -807,7 +806,7 @@ const urduDictionary: { [key: string]: string } = {
   these: "یہ",
   they: "وہ",
   thing: "چیز",
-   
+  
   third: "تیسرا",
   those: "وہ",
   though: "اگرچہ",
@@ -860,7 +859,7 @@ const urduDictionary: { [key: string]: string } = {
   war: "جنگ",
   watch: "دیکھنا",
   water: "پانی",
-  Way: "طریقہ",
+
   we: "ہم",
   wear: "پہننا",
   week: "ہفتہ",
@@ -882,26 +881,25 @@ const urduDictionary: { [key: string]: string } = {
   why: "کیوں",
   wide: "چوڑا",
   wife: "بیوی",
-  Will: "خواہش",
+  
   win: "جیتنا",
   wind: "ہوا",
   window: "کھڑکی",
   wish: "خواہش",
-  With : "کے ساتھ",
+  
   within: "اندر",
   without: "بغیر",
   woman: "عورت",
   wonder: "حیرت",
   word: "لفظ",
-  Work: "کام",
   worker: "مزدور",
-  worlds: "دنیا",
+
   worry: "پریشانی",
   would: "کریں گے",
   write: "لکھنا",
   writer: "مصنف",
   wrong: "غلط",
-  yard: " صحن",
+  yard: "صحن",
   yeah: "ہاں",
   yes: "جی ہاں",
   yet: "ابھی تک",
@@ -911,7 +909,7 @@ const urduDictionary: { [key: string]: string } = {
 };
 
 // Simple static summarization
-function summarizeContent(content: string): string {
+function summarizeContent(content: string): { summary: string; wordCount: number } {
   const text = convert(content, {
     wordwrap: false,
     selectors: [
@@ -926,14 +924,17 @@ function summarizeContent(content: string): string {
   
   for (const sentence of sentences) {
     const words = sentence.trim().split(/\s+/).length;
-    if (wordCount + words <= 150 && selectedSentences.length < 3) {
+    wordCount += words; // Accumulate total word count
+    if (wordCount <= 150 && selectedSentences.length < 3) {
       selectedSentences.push(sentence.trim());
-      wordCount += words;
     } else {
       break;
     }
   }
-  return selectedSentences.join(". ") + (selectedSentences.length > 0 ? "." : "");
+  return {
+    summary: selectedSentences.join(". ") + (selectedSentences.length > 0 ? "." : ""),
+    wordCount
+  };
 }
 
 // Simple Urdu translation
@@ -992,8 +993,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Could not extract article content" }, { status: 422 });
     }
 
-    // Generate summary and translation
-    const summary = summarizeContent(article.content);
+    // Generate summary and word count
+    const { summary, wordCount } = summarizeContent(article.content);
     const urduTranslation = translateToUrdu(summary);
 
     console.log("Summary generated:", summary ? "✓ Success" : "✗ Failed");
@@ -1050,6 +1051,7 @@ export async function POST(req: NextRequest) {
       author: article.author || null,
       source: article.source || null,
       published: article.published || null,
+      wordCount // Added word count to response
     });
 
   } catch (error) {
