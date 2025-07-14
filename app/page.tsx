@@ -18,13 +18,13 @@ export default function Home() {
     author?: string;
     source?: string;
     published?: string;
-    wordCount?: number; // Added wordCount to state
+    wordCount?: number;  
   } | null>(null);
   const [displayedSummary, setDisplayedSummary] = useState("");
   const [displayedUrduTranslation, setDisplayedUrduTranslation] = useState("");
   const [typingComplete, setTypingComplete] = useState(false);
 
-  // Typing animation effect
+ 
   useEffect(() => {
     if (result && !typingComplete) {
       let summaryIndex = 0;
@@ -34,7 +34,7 @@ export default function Home() {
       setDisplayedSummary("");
       setDisplayedUrduTranslation("");
 
-      const typingSpeed = 50; // Milliseconds per character
+      const typingSpeed = 50;  
       const typingInterval = setInterval(() => {
         if (summaryIndex < summaryText.length) {
           setDisplayedSummary((prev) => prev + summaryText[summaryIndex]);
@@ -54,9 +54,9 @@ export default function Home() {
     }
   }, [result, typingComplete]);
 
-  // Calculate reading time
+ 
   const calculateReadingTime = (wordCount: number): string => {
-    const wordsPerMinute = 200; // Standard reading speed
+    const wordsPerMinute = 200; 
     const minutes = Math.ceil(wordCount / wordsPerMinute);
     return minutes === 1 ? `${minutes} minute` : `${minutes} minutes`;
   };
@@ -108,7 +108,7 @@ export default function Home() {
         author: data.author,
         source: data.source,
         published: data.published,
-        wordCount: data.wordCount, // Include wordCount
+        wordCount: data.wordCount,  
       });
     } catch (error) {
       console.error("Error processing URL:", error);

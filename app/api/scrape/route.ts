@@ -908,7 +908,7 @@ const urduDictionary: { [key: string]: string } = {
   yourself: "خود",
 };
 
-// Simple static summarization
+ 
 function summarizeContent(content: string): { summary: string; wordCount: number } {
   const text = convert(content, {
     wordwrap: false,
@@ -924,7 +924,7 @@ function summarizeContent(content: string): { summary: string; wordCount: number
   
   for (const sentence of sentences) {
     const words = sentence.trim().split(/\s+/).length;
-    wordCount += words; // Accumulate total word count
+    wordCount += words;  
     if (wordCount <= 150 && selectedSentences.length < 3) {
       selectedSentences.push(sentence.trim());
     } else {
@@ -937,7 +937,7 @@ function summarizeContent(content: string): { summary: string; wordCount: number
   };
 }
 
-// Simple Urdu translation
+ 
 function translateToUrdu(text: string): string {
   let translated = text;
   for (const [en, ur] of Object.entries(urduDictionary)) {
@@ -948,7 +948,7 @@ function translateToUrdu(text: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  // Environment variables validation
+   
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_ANON_KEY;
   const mongoUri = process.env.MONGODB_URI;
@@ -975,7 +975,7 @@ export async function POST(req: NextRequest) {
   let mongoClient: MongoClient | null = null;
 
   try {
-    // Parse and validate request body
+     
     const body = await req.json();
     const { url } = body;
     
@@ -985,7 +985,7 @@ export async function POST(req: NextRequest) {
 
     console.log("Processing URL:", url);
 
-    // Extract article content
+   
     const article = await extract(url);
     console.log("Article extracted:", article ? "✓ Success" : "✗ Failed");
     
@@ -993,17 +993,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Could not extract article content" }, { status: 422 });
     }
 
-    // Generate summary and word count
+     
     const { summary, wordCount } = summarizeContent(article.content);
     const urduTranslation = translateToUrdu(summary);
 
     console.log("Summary generated:", summary ? "✓ Success" : "✗ Failed");
     console.log("Urdu translation:", urduTranslation ? "✓ Success" : "✗ Failed");
 
-    // Initialize Supabase client
+     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Save to Supabase
+ 
     const { error: supabaseError } = await supabase
       .from("summaries")
       .insert({
@@ -1023,8 +1023,7 @@ export async function POST(req: NextRequest) {
     }
 
     console.log("Saved to Supabase: ✓ Success");
-
-    // Connect to MongoDB and save full article
+ 
     mongoClient = new MongoClient(mongoUri);
     await mongoClient.connect();
     
@@ -1043,7 +1042,7 @@ export async function POST(req: NextRequest) {
 
     console.log("Saved to MongoDB: ✓ Success");
 
-    // Return successful response
+     
     return NextResponse.json({
       title: article.title || "No title",
       summary,
@@ -1051,7 +1050,7 @@ export async function POST(req: NextRequest) {
       author: article.author || null,
       source: article.source || null,
       published: article.published || null,
-      wordCount // Added word count to response
+      wordCount 
     });
 
   } catch (error) {
@@ -1064,7 +1063,7 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   } finally {
-    // Always close MongoDB connection
+     
     if (mongoClient) {
       try {
         await mongoClient.close();
